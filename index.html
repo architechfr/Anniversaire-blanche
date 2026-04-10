@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bon Anniversaire Blanche ! 🎀</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#0e0a14;
+  min-height:100vh;
+  display:flex; flex-direction:column; align-items:center;
+  padding:1.2rem 1rem 2rem; gap:1.2rem; color:white;
+}
+.cf { position:fixed; top:0; border-radius:2px; animation:cfall linear forwards; pointer-events:none; z-index:200; }
+@keyframes cfall    { 0%{transform:translateY(-10px) rotate(0);opacity:1} 100%{transform:translateY(105vh) rotate(600deg);opacity:0} }
+@keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes flicker  { 0%,100%{opacity:1;transform:scaleY(1)} 40%{opacity:.8;transform:scaleY(1.1) scaleX(.9)} }
+@keyframes bigpop   { 0%{opacity:0;transform:scale(.08) rotate(-15deg)} 65%{transform:scale(1.1) rotate(2deg)} 100%{opacity:1;transform:scale(1) rotate(0)} }
+@keyframes shimmer  { 0%,100%{opacity:.6} 50%{opacity:1} }
+@keyframes sparkle  { 0%{transform:scale(0) rotate(0)} 50%{transform:scale(1.2) rotate(180deg)} 100%{transform:scale(0) rotate(360deg)} }
+
+/* Carte */
+.card {
+  background:#1a1024; border-radius:20px; padding:1.5rem 1.8rem;
+  max-width:500px; width:100%;
+  border:1px solid rgba(255,182,213,.15);
+  position:relative; overflow:hidden; text-align:center;
+}
+.card::before {
+  content:''; position:absolute; top:0;left:0;right:0; height:3px;
+  background:linear-gradient(90deg,#FFB6D9,#C9A9F5,#FFD6B0,#A9D4F5,#FFB6D9);
+}
+.cake-anim { animation:float 3.5s ease-in-out infinite; display:inline-block; margin-bottom:.4rem; }
+.flame { animation:flicker .4s ease-in-out infinite; transform-origin:bottom center; }
+.card-name { font-size:28px; font-weight:700; color:#FFB6D9; letter-spacing:.05em; }
+.card-sub  { font-size:11px; color:rgba(255,182,213,.35); font-style:italic; margin:.2rem 0 .7rem; }
+.card-msg  { background:rgba(201,169,245,.08); border-radius:14px; padding:.8rem 1rem;
+             font-size:13px; color:rgba(255,255,255,.65); line-height:1.75;
+             border:1px solid rgba(201,169,245,.15); margin-bottom:.9rem; }
+.card-msg strong { color:#C9A9F5; }
+.tag { font-size:11px; padding:4px 12px; border-radius:16px; display:inline-block; margin:3px; }
+.btn { border:none; padding:8px 20px; border-radius:10px; font-size:13px; cursor:pointer; font-family:inherit; font-weight:600; }
+.btn-pink { background:linear-gradient(135deg,#FFB6D9,#C9A9F5); color:#1a0a1f; }
+.btn-pink:hover { background:linear-gradient(135deg,#ff9dc9,#b490e8); }
+
+/* Jeu */
+.game-wrap { max-width:500px; width:100%; }
+.game-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap; gap:4px; }
+.game-title { font-size:14px; font-weight:600; color:#FFB6D9; }
+.game-hint  { font-size:10px; color:rgba(255,182,213,.3); font-style:italic; }
+.hud { display:flex; gap:12px; font-size:12px; color:rgba(255,182,213,.5); align-items:center; }
+.hud b { color:#FFB6D9; }
+canvas { display:block; width:100%; border-radius:12px; border:1px solid rgba(255,182,213,.2); }
+.bottom-bar { display:flex; justify-content:space-between; align-items:center; margin-top:7px; flex-wrap:wrap; gap:6px; }
+#msg { font-size:11px; color:#C9A9F5; min-height:18px; font-style:italic; }
+.btn-start { background:linear-gradient(135deg,#FFB6D9,#C9A9F5); color:#1a0a1f; border:none; padding:6px 16px; border-radius:8px; font-size:12px; cursor:pointer; font-family:inherit; font-weight:700; }
+.btn-start:hover { opacity:.85; }
+#active-bonus { display:flex; gap:5px; flex-wrap:wrap; }
+.bbadge { font-size:10px; padding:2px 8px; border-radius:9px; font-weight:600; }
+
+/* Overlay */
+#overlay { display:none; position:fixed; inset:0; background:rgba(14,10,20,.96); z-index:150;
+           align-items:center; justify-content:center; flex-direction:column; gap:.9rem;
+           text-align:center; padding:2rem; }
+#overlay.show { display:flex; }
+#ov-label { font-size:12px; color:rgba(255,182,213,.45); letter-spacing:.15em; text-transform:uppercase; }
+#ov-word  { font-size:64px; font-weight:900; letter-spacing:.08em;
+            animation:bigpop .7s cubic-bezier(.175,.885,.32,1.275) both; }
+#ov-chain { font-size:16px; color:rgba(255,255,255,.4); }
+#ov-btn   { background:linear-gradient(135deg,#FFB6D9,#C9A9F5); color:#1a0a1f; border:none;
+            padding:11px 30px; border-radius:12px; font-size:14px; cursor:pointer;
+            font-family:inherit; font-weight:700; margin-top:.3rem; }
+
+/* Finale */
+#finale { display:none; position:fixed; inset:0; background:rgba(14,10,20,.98); z-index:160;
+          align-items:center; justify-content:center; flex-direction:column; gap:.7rem;
+          text-align:center; padding:2rem; }
+#finale.show { display:flex; }
+#fin-full { font-size:34px; font-weight:900; letter-spacing:.06em;
+            background:linear-gradient(135deg,#FFB6D9,#C9A9F5,#FFD6B0);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            animation:bigpop .8s cubic-bezier(.175,.885,.32,1.275) both; }
+#fin-msg  { font-size:14px; color:rgba(255,255,255,.55); line-height:1.9; max-width:340px; }
+#fin-msg strong { color:#FFB6D9; }
+#fin-from { font-size:13px; color:rgba(201,169,245,.6); margin-top:.3rem; font-style:italic; }
+</style>
+</head>
+<body>
+
+<div id="confetti-container" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:100;"></div>
+
+<div id="overlay">
+  <div id="ov-label">Révélé ✨</div>
+  <div id="ov-word"></div>
+  <div id="ov-chain"></div>
+  <button id="ov-btn" onclick="nextLevel()"></button>
+</div>
+
+<div id="finale">
+  <div style="font-size:48px">🎀</div>
+  <div id="fin-full"></div>
+  <div id="fin-msg"></div>
+  <div id="fin-from"></div>
+  <button class="btn btn-pink" style="margin-top:.6rem;padding:10px 26px;font-size:14px" onclick="restartAll()">↺ Rejouer</button>
+</div>
+
+<!-- Carte -->
+<div class="card">
+  <div class="cake-anim">
+    <svg width="80" height="90" viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="55" width="80" height="45" rx="6" fill="#f7c5d8"/>
+      <rect x="10" y="55" width="80" height="12" rx="3" fill="#f4a8c5"/>
+      <rect x="20" y="40" width="60" height="18" rx="4" fill="#e8c9f5"/>
+      <rect x="20" y="40" width="60" height="8"  rx="2" fill="#d9b0f0"/>
+      <rect x="30" y="28" width="40" height="15" rx="4" fill="#ffd6b0"/>
+      <rect x="30" y="28" width="40" height="7"  rx="2" fill="#ffc490"/>
+      <rect x="35" y="62" width="30" height="4" rx="2" fill="#C9A9F5" opacity=".6"/>
+      <rect x="28" y="24" width="3"  height="14" rx="1.5" fill="#e8d0f0"/>
+      <rect x="44" y="20" width="3"  height="14" rx="1.5" fill="#e8d0f0"/>
+      <rect x="60" y="24" width="3"  height="14" rx="1.5" fill="#e8d0f0"/>
+      <ellipse class="flame" cx="29.5" cy="20" rx="4" ry="7" fill="#FFB6D9" opacity=".9"/>
+      <ellipse class="flame" cx="29.5" cy="21" rx="2.5" ry="4.5" fill="#fff0f6"/>
+      <ellipse class="flame" cx="45.5" cy="16" rx="4" ry="7" fill="#C9A9F5" opacity=".9" style="animation-delay:.15s"/>
+      <ellipse class="flame" cx="45.5" cy="17" rx="2.5" ry="4.5" fill="#f0eaff" style="animation-delay:.15s"/>
+      <ellipse class="flame" cx="61.5" cy="20" rx="4" ry="7" fill="#FFD6B0" opacity=".9" style="animation-delay:.3s"/>
+      <ellipse class="flame" cx="61.5" cy="21" rx="2.5" ry="4.5" fill="#fff8f0" style="animation-delay:.3s"/>
+    </svg>
+  </div>
+  <div style="font-size:11px;color:rgba(255,182,213,.4);margin-bottom:.2rem;">✨ Bon anniversaire ✨</div>
+  <div class="card-name">Blanche 🎀</div>
+  <div class="card-sub">14 ans aujourd'hui !</div>
+  <div class="card-msg">
+    14 ans — et déjà tellement de style,<br>
+    de caractère, et de lumière.<br>
+    Que cette année t'apporte tout ce que<br>
+    <strong>tu mérites, c'est-à-dire le meilleur. 🌸</strong>
+  </div>
+  <div>
+    <span class="tag" style="background:rgba(255,182,213,.15);color:#FFB6D9;">✨ Bonheur</span>
+    <span class="tag" style="background:rgba(201,169,245,.15);color:#C9A9F5;">🌸 Amour</span>
+    <span class="tag" style="background:rgba(255,214,176,.15);color:#FFD6B0;">🥂 Aventures</span>
+  </div>
+  <div style="margin-top:.8rem">
+    <button class="btn btn-pink" onclick="launchConfetti(60)">🎊 Confettis</button>
+  </div>
+</div>
+
+<!-- Jeu -->
+<div class="game-wrap">
+  <div class="game-header">
+    <div>
+      <div class="game-title">🎮 Casse-briques</div>
+      <div class="game-hint">Un message secret se cache dans les briques…</div>
+    </div>
+    <div class="hud">Score&nbsp;<b id="score">0</b>&nbsp; Vies&nbsp;<b id="lives">🤍🤍🤍</b>&nbsp; Niv.&nbsp;<b id="lvldisp">—</b></div>
+  </div>
+  <canvas id="c"></canvas>
+  <div class="bottom-bar">
+    <div>
+      <div id="msg"></div>
+      <div id="active-bonus"></div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <span style="font-size:10px;color:rgba(255,182,213,.25)">← → ou souris</span>
+      <button class="btn-start" id="startBtn" onclick="startGame()">▶ Jouer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+// POLICE PIXEL 5×7
+// ═══════════════════════════════
+const F={
+  'B':[[1,1,1,0,0],[1,0,0,1,0],[1,0,0,1,0],[1,1,1,0,0],[1,0,0,1,0],[1,0,0,1,0],[1,1,1,0,0]],
+  'O':[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
+  'N':[[1,0,0,0,1],[1,1,0,0,1],[1,0,1,0,1],[1,0,0,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],
+  'A':[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],
+  'I':[[0,1,1,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,1,1,1,0]],
+  'V':[[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,1,0,1,0],[0,0,1,0,0]],
+  'C':[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,1],[0,1,1,1,0]],
+  'L':[[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1]],
+  'H':[[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],
+  'E':[[1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1]],
+  'R':[[1,1,1,0,0],[1,0,0,1,0],[1,0,0,1,0],[1,1,1,0,0],[1,0,1,0,0],[1,0,0,1,0],[1,0,0,0,1]],
+  'G':[[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
+  'T':[[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0]],
+  'F':[[1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0]],
+  '!':[[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,1,0,0]],'1':[[0,0,1,0,0],[0,1,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,1,1,1,0]],'4':[[0,0,0,1,0],[0,0,1,1,0],[0,1,0,1,0],[1,0,0,1,0],[1,1,1,1,1],[0,0,0,1,0],[0,0,0,1,0]],'S':[[0,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[0,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,1,1,1,0]],
+  ' ':[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]],
+};
+
+// ═══════════════════════════════
+// NIVEAUX — esthétique pastel
+// ═══════════════════════════════
+const LEVELS=[
+  { secret:'BON',     color:'#FFB6D9', shadow:'rgba(255,182,217,.7)', hint:'Des briques pastel… mais lesquelles ?'  },
+  { secret:'ANNIV',   color:'#C9A9F5', shadow:'rgba(201,169,245,.7)', hint:'Quelque chose se dessine…'              },
+  { secret:'BLANCHE', color:'#FFD6B0', shadow:'rgba(255,214,176,.7)', hint:'Encore un mot caché…'                  },
+  { secret:'14ANS',  color:'#A9D4F5', shadow:'rgba(169,212,245,.7)', hint:'Dernier niveau — révèle tout !'        },
+];
+
+// Palettes de briques — dégradés pastel par niveau
+const BRICK_PALETTES=[
+  ['#ff9dc9','#ffb3d4','#f5a0c8','#e890b8','#ffc0d8','#f09cc0','#ffa8cc'],
+  ['#b890e8','#c9a9f5','#ba9ae5','#a888d8','#d0b8f8','#c0a0f0','#b098ec'],
+  ['#ffc090','#ffd6b0','#ffb878','#f0a868','#ffe0c0','#ffc898','#f8b880'],
+  ['#90c0e8','#a9d4f5','#80b8e0','#70a8d8','#b8d8f8','#98c8f0','#88b8e8'],
+];
+
+const BONUS_TYPES=[
+  { id:'multiball', label:'✨ x3', color:'#FFB6D9', bg:'rgba(255,182,217,.15)', tc:'#FFB6D9' },
+  { id:'life',      label:'🤍 +1', color:'#C9A9F5', bg:'rgba(201,169,245,.15)', tc:'#C9A9F5' },
+];
+
+// ═══════════════════════════════
+// CANVAS
+// ═══════════════════════════════
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+const REVEAL_H=56;
+let W,H,GAME_H;
+function resize(){
+  W=canvas.offsetWidth; canvas.width=W;
+  GAME_H=320; H=GAME_H+REVEAL_H; canvas.height=H;
+}
+resize();
+
+// ═══════════════════════════════
+// STATE
+// ═══════════════════════════════
+let balls,paddle,bricks,drops,particles,sparkles;
+let score,lives,levelIdx,state='idle',animId;
+let revealedWords=[],revealGrid=[],revealColor='#FFB6D9';
+
+// ═══════════════════════════════
+// BUILD WORD → BRIQUES
+// ═══════════════════════════════
+function buildBricks(lvlIdx){
+  const lv=LEVELS[lvlIdx], word=lv.secret, palette=BRICK_PALETTES[lvlIdx];
+  const glyphs=[...word].map(ch=>F[ch]||Array(7).fill([0,0,0,0,0]));
+  const wCols=glyphs.length*5+(glyphs.length-1);
+  const grid=Array.from({length:7},()=>Array(wCols).fill(0));
+  let cx=0;
+  for(const g of glyphs){
+    for(let r=0;r<7;r++) for(let c=0;c<5;c++) if(g[r][c]) grid[r][cx+c]=1;
+    cx+=6;
+  }
+  revealGrid=Array.from({length:7},()=>Array(wCols).fill(false));
+  revealColor=lv.color;
+  const gap=4;
+  const bw=Math.min(Math.floor((W-20-gap*(wCols-1))/wCols),26);
+  const bh=Math.min(bw,20);
+  const totalW=wCols*(bw+gap)-gap, totalH=7*(bh+gap)-gap;
+  const offX=Math.floor((W-totalW)/2);
+  const offY=Math.max(26,Math.floor((GAME_H-140-totalH)/2)+14);
+  const result=[];
+  for(let r=0;r<7;r++) for(let c=0;c<wCols;c++){
+    if(!grid[r][c]) continue;
+    result.push({
+      x:offX+c*(bw+gap), y:offY+r*(bh+gap),
+      w:bw, h:bh,
+      color:palette[Math.floor(Math.random()*palette.length)],
+      pr:r, pc:c, alive:true, pts:20,
+    });
+  }
+  return result;
+}
+
+// ═══════════════════════════════
+// INIT
+// ═══════════════════════════════
+function baseSpd(){ return 3.4+levelIdx*.45; }
+function mkBall(x,y,spd,angle){
+  const a=angle!==undefined?angle:-Math.PI/2+(Math.random()-.5)*.6;
+  return {x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,r:6};
+}
+function initLevel(lvl){
+  bricks=buildBricks(lvl);
+  balls=[mkBall(W/2,GAME_H-72,baseSpd())];
+  paddle={x:W/2-50,y:GAME_H-22,w:100,h:10};
+  drops=[];particles=[];sparkles=[];
+  document.getElementById('lvldisp').textContent=(lvl+1)+'/'+LEVELS.length;
+  setMsg(LEVELS[lvl].hint);
+  updateBonusBadges();
+}
+
+// ═══════════════════════════════
+// GAME FLOW
+// ═══════════════════════════════
+function startGame(){
+  score=0;lives=3;levelIdx=0;revealedWords=[];
+  initLevel(0); state='playing';
+  document.getElementById('startBtn').textContent='↺ Recommencer';
+  if(animId) cancelAnimationFrame(animId);
+  loop();
+}
+function restartAll(){ document.getElementById('finale').classList.remove('show'); startGame(); }
+
+function onLevelCleared(){
+  cancelAnimationFrame(animId); state='overlay';
+  for(let pr=0;pr<revealGrid.length;pr++) for(let pc=0;pc<revealGrid[pr].length;pc++) revealGrid[pr][pc]=true;
+  draw(performance.now());
+  setTimeout(()=>showOverlay(levelIdx),400);
+}
+
+function showOverlay(lvl){
+  const lv=LEVELS[lvl],isLast=lvl===LEVELS.length-1;
+  revealedWords.push(lv.secret);
+  document.getElementById('ov-word').textContent=lv.secret;
+  document.getElementById('ov-word').style.color=lv.color;
+  document.getElementById('ov-word').style.textShadow='0 0 60px '+lv.shadow;
+  document.getElementById('ov-chain').textContent=isLast?revealedWords.join(' '):'Message : '+revealedWords.join(' ')+' …';
+  document.getElementById('ov-btn').textContent=isLast?'🎀 Voir la surprise finale':'▶ Niveau suivant';
+  document.getElementById('overlay').classList.add('show');
+  bigConfetti();
+}
+
+function nextLevel(){
+  document.getElementById('overlay').classList.remove('show');
+  if(levelIdx===LEVELS.length-1) showFinale();
+  else{ levelIdx++;initLevel(levelIdx);state='playing';loop(); }
+}
+
+function showFinale(){
+  state='finale';
+  document.getElementById('fin-full').textContent=revealedWords.join(' ');
+  document.getElementById('fin-msg').innerHTML=
+    '14 ans, le monde t\'appartient.<br>'
+    +'Fonce, rayonne, <strong>éblouie tout le monde. ✨</strong>';
+  document.getElementById('fin-from').textContent='Avec tout l\'amour de tonton Flo 💜';
+  document.getElementById('finale').classList.add('show');
+  bigConfetti();setTimeout(bigConfetti,700);setTimeout(bigConfetti,1400);
+}
+
+// ═══════════════════════════════
+// CONFETTI pastel
+// ═══════════════════════════════
+const CC=['#FFB6D9','#C9A9F5','#FFD6B0','#A9D4F5','#F5C9E0','#D4B8F5','#FFE0C0','#B8D8F8'];
+function launchConfetti(n=60){
+  for(let i=0;i<n;i++) setTimeout(()=>{
+    const el=document.createElement('div');el.className='cf';
+    el.style.left=Math.random()*100+'vw';
+    el.style.background=CC[Math.floor(Math.random()*CC.length)];
+    el.style.width=(7+Math.random()*8)+'px';el.style.height=(7+Math.random()*8)+'px';
+    el.style.borderRadius=Math.random()>.5?'50%':'2px';
+    el.style.animationDuration=(1.8+Math.random()*2.8)+'s';
+    document.getElementById('confetti-container').appendChild(el);
+    setTimeout(()=>el.remove(),5000);
+  },i*28);
+}
+function bigConfetti(){launchConfetti(100);}
+setTimeout(()=>launchConfetti(50),400);
+
+// ═══════════════════════════════
+// BONUS
+// ═══════════════════════════════
+function spawnDrop(b){
+  if(Math.random()<.2){
+    const bt=BONUS_TYPES[Math.floor(Math.random()*BONUS_TYPES.length)];
+    drops.push({x:b.x+b.w/2,y:b.y+b.h/2,type:bt.id,vy:2.0});
+  }
+}
+function applyBonus(type){
+  if(type==='multiball'){
+    const spd=baseSpd(),src=balls[0]||mkBall(W/2,GAME_H-72,spd);
+    const a=Math.atan2(src.vy,src.vx);
+    balls.push(mkBall(src.x,src.y,spd,a+.65));
+    balls.push(mkBall(src.x,src.y,spd,a-.65));
+    setMsg('✨ Triple balle !');
+  } else if(type==='life'){
+    lives=Math.min(lives+1,5);setMsg('🤍 +1 vie !');
+  }
+  updateBonusBadges();
+}
+let msgT;
+function setMsg(txt){
+  document.getElementById('msg').textContent=txt;
+  clearTimeout(msgT);
+  msgT=setTimeout(()=>{if(state==='playing')document.getElementById('msg').textContent='';},2200);
+}
+function updateBonusBadges(){ document.getElementById('active-bonus').innerHTML=''; }
+
+// ═══════════════════════════════
+// PARTICLES + SPARKLES
+// ═══════════════════════════════
+function spawnParticles(b){
+  for(let i=0;i<10;i++){
+    const a=Math.random()*Math.PI*2,spd=1.5+Math.random()*4;
+    particles.push({x:b.x+b.w/2,y:b.y+b.h/2,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,color:b.color,r:2+Math.random()*3});
+  }
+  // Petites étoiles scintillantes
+  for(let i=0;i<4;i++){
+    sparkles.push({x:b.x+Math.random()*b.w,y:b.y+Math.random()*b.h,life:1,size:3+Math.random()*5,color:revealColor});
+  }
+}
+
+// ═══════════════════════════════
+// DRAW
+// ═══════════════════════════════
+function rr(x,y,w,h,r,fill){ ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill(); }
+
+function drawReveal(){
+  if(!revealGrid.length||!revealGrid[0]?.length) return;
+  const wc=revealGrid[0].length;
+  const ps=Math.min(Math.floor((W-20)/wc),Math.floor((REVEAL_H-10)/7));
+  const tw=wc*ps+(wc-1),th=7*ps+6;
+  const ox=Math.floor((W-tw)/2),oy=GAME_H+Math.floor((REVEAL_H-th)/2);
+  for(let pr=0;pr<revealGrid.length;pr++){
+    for(let pc=0;pc<revealGrid[pr].length;pc++){
+      const px=ox+pc*(ps+1),py=oy+pr*(ps+1);
+      if(revealGrid[pr][pc]){
+        ctx.shadowColor=revealColor;ctx.shadowBlur=12;
+        ctx.fillStyle=revealColor;ctx.fillRect(px,py,ps,ps);
+        ctx.shadowBlur=0;
+      } else {
+        ctx.fillStyle='rgba(255,255,255,.04)';ctx.fillRect(px,py,ps,ps);
+      }
+    }
+  }
+}
+
+function drawStar(x,y,size,color,alpha){
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle=color;
+  ctx.save();ctx.translate(x,y);
+  ctx.beginPath();
+  for(let i=0;i<5;i++){
+    const a=i*Math.PI*2/5-Math.PI/2;
+    const bi=a+Math.PI/5;
+    ctx.lineTo(Math.cos(a)*size,Math.sin(a)*size);
+    ctx.lineTo(Math.cos(bi)*size*.4,Math.sin(bi)*size*.4);
+  }
+  ctx.closePath();ctx.fill();
+  ctx.restore();ctx.globalAlpha=1;
+}
+
+function draw(t=0){
+  ctx.clearRect(0,0,W,H);
+
+  // Fond — dégradé sombre élégant
+  const bg=ctx.createLinearGradient(0,0,0,GAME_H);
+  bg.addColorStop(0,'#0e0a14');bg.addColorStop(1,'#150e20');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,GAME_H);
+
+  // Particules de fond (étoiles fixes)
+  if(state==='playing'||state==='overlay'){
+    ctx.fillStyle='rgba(255,255,255,.15)';
+    for(let i=0;i<30;i++){
+      const sx=(i*137.5)%W,sy=(i*97.3)%GAME_H;
+      const blink=.4+.6*Math.abs(Math.sin(t*.001+i));
+      ctx.globalAlpha=blink*.3;
+      ctx.beginPath();ctx.arc(sx,sy,1,0,Math.PI*2);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }
+
+  // Briques
+  for(const b of bricks){
+    if(!b.alive) continue;
+    rr(b.x,b.y,b.w,b.h,4,b.color);
+    // Brillance pastel
+    ctx.fillStyle='rgba(255,255,255,.25)';ctx.fillRect(b.x+2,b.y+2,b.w-4,4);
+    // Petit contour lumineux
+    ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=.8;
+    ctx.strokeRect(b.x+.5,b.y+.5,b.w-1,b.h-1);
+  }
+
+  // Particles
+  for(const p of particles){
+    ctx.globalAlpha=p.life;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);
+    ctx.fillStyle=p.color;ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // Sparkles (étoiles)
+  for(const s of sparkles){
+    drawStar(s.x,s.y,s.size*s.life,s.color,s.life);
+  }
+
+  // Drops
+  for(const d of drops){
+    const bt=BONUS_TYPES.find(b=>b.id===d.type);
+    rr(d.x-18,d.y-10,36,20,10,bt.color+'33');
+    ctx.strokeStyle=bt.color;ctx.lineWidth=1;
+    ctx.beginPath();ctx.roundRect(d.x-18,d.y-10,36,20,10);ctx.stroke();
+    ctx.fillStyle='white';ctx.font='bold 10px -apple-system,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(bt.label,d.x,d.y+1);
+  }
+
+  // Paddle — dégradé pastel
+  const pg=ctx.createLinearGradient(paddle.x,paddle.y,paddle.x+paddle.w,paddle.y);
+  pg.addColorStop(0,'#FFB6D9');pg.addColorStop(.5,'#C9A9F5');pg.addColorStop(1,'#A9D4F5');
+  rr(paddle.x,paddle.y,paddle.w,paddle.h,6,pg);
+  ctx.fillStyle='rgba(255,255,255,.2)';ctx.fillRect(paddle.x+4,paddle.y+2,paddle.w-8,3);
+
+  // Balles
+  for(const b of balls){
+    ctx.globalAlpha=.2;
+    ctx.beginPath();ctx.arc(b.x-b.vx*1.5,b.y-b.vy*1.5,b.r*.6,0,Math.PI*2);
+    ctx.fillStyle='#FFB6D9';ctx.fill();ctx.globalAlpha=1;
+    // Balle avec dégradé nacré
+    const bg2=ctx.createRadialGradient(b.x-b.r*.3,b.y-b.r*.3,b.r*.1,b.x,b.y,b.r);
+    bg2.addColorStop(0,'#fff0f6');bg2.addColorStop(.5,'#FFB6D9');bg2.addColorStop(1,'#C9A9F5');
+    ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    ctx.fillStyle=bg2;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=.8;ctx.stroke();
+  }
+
+  // Fond zone révélation
+  ctx.fillStyle='#080510';ctx.fillRect(0,GAME_H,W,REVEAL_H);
+  ctx.strokeStyle='rgba(255,182,213,.12)';ctx.lineWidth=1;
+  ctx.setLineDash([3,7]);ctx.beginPath();ctx.moveTo(0,GAME_H);ctx.lineTo(W,GAME_H);ctx.stroke();ctx.setLineDash([]);
+
+  drawReveal();
+
+  // HUD
+  document.getElementById('score').textContent=score;
+  document.getElementById('lives').textContent='🤍'.repeat(Math.max(0,lives));
+}
+
+// ═══════════════════════════════
+// COLLISION
+// ═══════════════════════════════
+function collideBall(b){
+  for(const br of bricks){
+    if(!br.alive) continue;
+    if(b.x+b.r>br.x&&b.x-b.r<br.x+br.w&&b.y+b.r>br.y&&b.y-b.r<br.y+br.h){
+      br.alive=false;score+=br.pts;
+      spawnParticles(br);spawnDrop(br);
+      if(br.pr<revealGrid.length&&br.pc<(revealGrid[0]?.length||0))
+        revealGrid[br.pr][br.pc]=true;
+      const oL=b.x+b.r-br.x,oR=br.x+br.w-(b.x-b.r),oT=b.y+b.r-br.y,oB=br.y+br.h-(b.y-b.r);
+      if(Math.min(oL,oR)<Math.min(oT,oB)) b.vx*=-1; else b.vy*=-1;
+      return;
+    }
+  }
+}
+
+// ═══════════════════════════════
+// BOUCLE
+// ═══════════════════════════════
+function loop(t=0){
+  if(state!=='playing'){draw(t);return;}
+  animId=requestAnimationFrame(loop);
+
+  if(keys['ArrowLeft'])  paddle.x=Math.max(0,paddle.x-7);
+  if(keys['ArrowRight']) paddle.x=Math.min(W-paddle.w,paddle.x+7);
+
+  // Particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.14;p.life-=.03;
+    if(p.life<=0) particles.splice(i,1);
+  }
+  for(let i=sparkles.length-1;i>=0;i--){
+    sparkles[i].life-=.04;if(sparkles[i].life<=0) sparkles.splice(i,1);
+  }
+
+  // Drops
+  for(let i=drops.length-1;i>=0;i--){
+    const d=drops[i];d.y+=d.vy;
+    if(d.y>GAME_H){drops.splice(i,1);continue;}
+    if(d.y+10>=paddle.y&&d.x>=paddle.x&&d.x<=paddle.x+paddle.w){
+      applyBonus(d.type);drops.splice(i,1);
+    }
+  }
+
+  // Balles
+  for(let i=balls.length-1;i>=0;i--){
+    const b=balls[i];
+    b.x+=b.vx;b.y+=b.vy;
+    if(b.x-b.r<0){b.x=b.r;b.vx*=-1;}
+    if(b.x+b.r>W){b.x=W-b.r;b.vx*=-1;}
+    if(b.y-b.r<0){b.y=b.r;b.vy*=-1;}
+    if(b.vy>0&&b.y+b.r>=paddle.y&&b.y+b.r<=paddle.y+paddle.h+10&&b.x>=paddle.x-b.r&&b.x<=paddle.x+paddle.w+b.r){
+      const hit=(b.x-(paddle.x+paddle.w/2))/(paddle.w/2);
+      b.vx=hit*6;b.vy=-Math.abs(b.vy);
+      const spd=Math.sqrt(b.vx**2+b.vy**2)||1,t2=baseSpd();
+      b.vx=b.vx/spd*t2;b.vy=b.vy/spd*t2;
+    } else if(b.y-b.r>GAME_H){ balls.splice(i,1); }
+    else { collideBall(b); }
+  }
+
+  if(balls.length===0){
+    lives--;
+    if(lives<=0){ state='over';setMsg('💔 Game over — score : '+score);cancelAnimationFrame(animId);draw(t);return; }
+    balls=[mkBall(W/2,GAME_H-72,baseSpd())];drops=[];
+    setMsg('🌸 Réessaie !');
+  }
+
+  if(bricks.every(b=>!b.alive)){ onLevelCleared();return; }
+  draw(t);
+}
+
+// ═══════════════════════════════
+// INPUT
+// ═══════════════════════════════
+canvas.addEventListener('mousemove',e=>{
+  if(state!=='playing') return;
+  const r=canvas.getBoundingClientRect();
+  paddle.x=Math.max(0,Math.min(W-paddle.w,(e.clientX-r.left)*W/r.width-paddle.w/2));
+});
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();if(state!=='playing') return;
+  const r=canvas.getBoundingClientRect();
+  paddle.x=Math.max(0,Math.min(W-paddle.w,(e.touches[0].clientX-r.left)*W/r.width-paddle.w/2));
+},{passive:false});
+const keys={};
+document.addEventListener('keydown',e=>keys[e.key]=true);
+document.addEventListener('keyup',e=>keys[e.key]=false);
+
+// ═══════════════════════════════
+// IDLE
+// ═══════════════════════════════
+resize();
+revealGrid=Array.from({length:7},()=>Array(10).fill(false));
+draw(0);
+ctx.font='500 13px -apple-system,sans-serif';ctx.fillStyle='rgba(255,182,213,.55)';
+ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText('Un message secret se cache dans les briques… 🌸',W/2,GAME_H/2-10);
+ctx.font='11px -apple-system,sans-serif';ctx.fillStyle='rgba(201,169,245,.3)';
+ctx.fillText('Casse-les toutes pour le découvrir',W/2,GAME_H/2+14);
+</script>
+</body>
+</html>
